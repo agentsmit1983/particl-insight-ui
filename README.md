@@ -1,118 +1,143 @@
-# Insight UI
+### Usage
 
-A Particl blockchain explorer web application service for [Bitcore Node](https://github.com/particl/particl-bitcore-node) using the [Insight API](https://github.com/particl/particl-insight-api).
+To build dependencies for the current arch+OS:
 
-## Quick Start
+    make
 
-Please see the guide at [https://bitcore.io/guides/full-node](https://bitcore.io/guides/full-node) for information about getting a block explorer running. This is only the front-end component of the block explorer, and is packaged together with all of the necessary components in [Bitcore](https://github.com/bitpay/bitcore).
+To build for another arch/OS:
 
-## Getting Started
+    make HOST=host-platform-triplet
 
-To manually install all of the necessary components, you can run these commands:
+For example:
 
-```bash
-npm install -g bitcore-node
-bitcore-node create mynode
-cd mynode
-bitcore-node install insight-api
-bitcore-node install insight-ui
-bitcore-node start
-```
+    make HOST=x86_64-w64-mingw32 -j4
 
-Open a web browser to `http://localhost:3001/insight/`
+**Bitcoin Core's `configure` script by default will ignore the depends output.** In
+order for it to pick up libraries, tools, and settings from the depends build,
+you must set the `CONFIG_SITE` environment variable to point to a `config.site` settings file.
+Make sure that `CONFIG_SITE` is an absolute path.
+In the above example, a file named `depends/x86_64-w64-mingw32/share/config.site` will be
+created. To use it during compilation:
 
-## Development
+    CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure
 
-To build Insight UI locally:
+The default install prefix when using `config.site` is `--prefix=depends/<host-platform-triplet>`,
+so depends build outputs will be installed in that location.
 
-```
-$ npm run build
-```
+Common `host-platform-triplet`s for cross compilation are:
 
-A watch task is also available:
+- `i686-pc-linux-gnu` for Linux 32 bit
+- `x86_64-pc-linux-gnu` for x86 Linux
+- `x86_64-w64-mingw32` for Win64
+- `x86_64-apple-darwin` for macOS
+- `arm64-apple-darwin` for ARM macOS
+- `arm-linux-gnueabihf` for Linux ARM 32 bit
+- `aarch64-linux-gnu` for Linux ARM 64 bit
+- `powerpc64-linux-gnu` for Linux POWER 64-bit (big endian)
+- `powerpc64le-linux-gnu` for Linux POWER 64-bit (little endian)
+- `riscv32-linux-gnu` for Linux RISC-V 32 bit
+- `riscv64-linux-gnu` for Linux RISC-V 64 bit
+- `s390x-linux-gnu` for Linux S390X
 
-```
-$ npm run watch
-```
+The paths are automatically configured and no other options are needed.
 
-## Changing routePrefix and apiPrefix
+### Install the required dependencies: Ubuntu & Debian
 
-By default, the `insightConfig` in `package.json` is:
+#### Common
 
-```json
-  "insightConfig": {
-    "apiPrefix": "insight-api",
-    "routePrefix": "insight"
-  }
-```
+    apt install automake bison cmake curl libtool make patch pkg-config python3 xz-utils
 
-To change these routes, first make your changes to `package.json`, for example:
+#### For macOS cross compilation
 
-```json
-  "insightConfig": {
-    "apiPrefix": "api",
-    "routePrefix": ""
-  }
-```
+    apt install clang lld llvm g++ zip
 
-Then rebuild the `insight-ui` service:
+Clang 18 or later is required. You must also obtain the macOS SDK before
+proceeding with a cross-compile. Under the depends directory, create a
+subdirectory named `SDKs`. Then, place the extracted SDK under this new directory.
+For more information, see [SDK Extraction](../contrib/macdeploy/README.md#sdk-extraction).
 
-```
-$ npm run build
-```
+#### For Win64 cross compilation
 
-## Multilanguage support
+- see [build-windows.md](../doc/build-windows.md#cross-compilation-for-ubuntu-and-windows-subsystem-for-linux)
 
-Insight UI uses [angular-gettext](http://angular-gettext.rocketeer.be) for multilanguage support.
+#### For linux (including i386, ARM) cross compilation
 
-To enable a text to be translated, add the ***translate*** directive to html tags. See more details [here](http://angular-gettext.rocketeer.be/dev-guide/annotate/). Then, run:
+Common linux dependencies:
 
-```
-grunt compile
-```
+    sudo apt-get install g++-multilib binutils
 
-This action will create a template.pot file in ***po/*** folder. You can open it with some PO editor ([Poedit](http://poedit.net)). Read this [guide](http://angular-gettext.rocketeer.be/dev-guide/translate/) to learn how to edit/update/import PO files from a generated POT file. PO file will be generated inside po/ folder.
+For linux ARM cross compilation:
 
-If you make new changes, simply run **grunt compile** again to generate a new .pot template and the angular javascript ***js/translations.js***. Then (if use Poedit), open .po file and choose ***update from POT File*** from **Catalog** menu.
+    sudo apt-get install g++-arm-linux-gnueabihf binutils-arm-linux-gnueabihf
 
-Finally changes your default language from ***public/src/js/config***
+For linux AARCH64 cross compilation:
 
-```
-gettextCatalog.currentLanguage = 'es';
-```
+    sudo apt-get install g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
 
-This line will take a look at any *.po files inside ***po/*** folder, e.g.
-**po/es.po**, **po/nl.po**. After any change do not forget to run ***grunt
-compile***.
+For linux POWER 64-bit cross compilation (there are no packages for 32-bit):
+
+    sudo apt-get install g++-powerpc64-linux-gnu binutils-powerpc64-linux-gnu g++-powerpc64le-linux-gnu binutils-powerpc64le-linux-gnu
+
+For linux RISC-V 64-bit cross compilation (there are no packages for 32-bit):
+
+    sudo apt-get install g++-riscv64-linux-gnu binutils-riscv64-linux-gnu
+
+For linux S390X cross compilation:
+
+    sudo apt-get install g++-s390x-linux-gnu binutils-s390x-linux-gnu
+
+### Install the required dependencies: FreeBSD
+
+    pkg install bash
+
+### Install the required dependencies: OpenBSD
+
+    pkg_add bash gtar
+
+### Dependency Options
+
+The following can be set when running make: `make FOO=bar`
+
+- `SOURCES_PATH`: Downloaded sources will be placed here
+- `BASE_CACHE`: Built packages will be placed here
+- `SDK_PATH`: Path where SDKs can be found (used by macOS)
+- `FALLBACK_DOWNLOAD_PATH`: If a source file can't be fetched, try here before giving up
+- `C_STANDARD`: Set the C standard version used. Defaults to `c11`.
+- `CXX_STANDARD`: Set the C++ standard version used. Defaults to `c++20`.
+- `NO_BOOST`: Don't download/build/cache Boost
+- `NO_LIBEVENT`: Don't download/build/cache Libevent
+- `NO_QT`: Don't download/build/cache Qt and its dependencies
+- `NO_QR`: Don't download/build/cache packages needed for enabling qrencode
+- `NO_ZMQ`: Don't download/build/cache packages needed for enabling ZeroMQ
+- `NO_WALLET`: Don't download/build/cache libs needed to enable the wallet
+- `NO_BDB`: Don't download/build/cache BerkeleyDB
+- `NO_SQLITE`: Don't download/build/cache SQLite
+- `NO_UPNP`: Don't download/build/cache packages needed for enabling UPnP
+- `NO_NATPMP`: Don't download/build/cache packages needed for enabling NAT-PMP
+- `NO_USDT`: Don't download/build/cache packages needed for enabling USDT tracepoints
+- `MULTIPROCESS`: Build libmultiprocess (experimental, requires CMake)
+- `DEBUG`: Disable some optimizations and enable more runtime checking
+- `HOST_ID_SALT`: Optional salt to use when generating host package ids
+- `BUILD_ID_SALT`: Optional salt to use when generating build package ids
+- `LOG`: Use file-based logging for individual packages. During a package build its log file
+  resides in the `depends` directory, and the log file is printed out automatically in case
+  of build error. After successful build log files are moved along with package archives
+- `LTO`: Enable options needed for LTO. Does not add `-flto` related options to *FLAGS.
+- `NO_HARDEN=1`: Don't use hardening options when building packages
+- `PROTOBUF`: build protobuf (required for Particl usb device support)
+
+If some packages are not built, for example `make NO_WALLET=1`, the appropriate
+options will be passed to bitcoin's configure. In this case, `--disable-wallet`.
+
+### Additional targets
+
+    download: run 'make download' to fetch all sources without building them
+    download-osx: run 'make download-osx' to fetch all sources needed for macOS builds
+    download-win: run 'make download-win' to fetch all sources needed for win builds
+    download-linux: run 'make download-linux' to fetch all sources needed for linux builds
 
 
-## Note
+### Other documentation
 
-For more details about the [Insight API](https://github.com/particl/particl-insight-api) configuration and end-points, go to [Insight API GitHub repository](https://github.com/particl/particl-insight-api).
-
-## Contribute
-
-Contributions and suggestions are welcomed at the [Insight UI GitHub repository](https://github.com/particl/particl-insight-ui).
-
-
-## License
-(The MIT License)
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-'Software'), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- [description.md](description.md): General description of the depends system
+- [packages.md](packages.md): Steps for adding packages
